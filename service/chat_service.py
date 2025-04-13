@@ -25,8 +25,6 @@ class ChatService:
             self._logger.error(f"Error initializing RagService: {e}")
 
 
-
-
     async def _update_chat_thread(
             self,
             chat_thread: ChatThreadModel
