@@ -18,7 +18,7 @@ class ContextRepository(MongoDBRepositoryBase):
             db_list = await self._db.client.list_database_names()
 
             # Check if our database exists
-            if "context" not in db_list:
+            if "psychology_chat_context" not in db_list:
                 # Create database by inserting a dummy document and then deleting it
                 await self._db.command({
                     "create": "chat_history",
@@ -194,4 +194,5 @@ class ContextRepository(MongoDBRepositoryBase):
             return True
         else:
             return False
+
 context_repository = ContextRepository()
