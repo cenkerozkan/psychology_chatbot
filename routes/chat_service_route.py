@@ -62,6 +62,20 @@ async def event_generator(chat_request: ChatRequest, chat_thread: ChatThreadMode
     _logger.debug(f"Sending message to chat service: '{chat_request.message[:50]}...'")
     full_response = await chat_service.send_message(chat_request.message, chat_thread)
 
+    # Handle the case where the response is a dictionary/string representation of a dict
+    if isinstance(full_response, dict) and 'content' in full_response:
+        full_response = full_response['content']
+    elif isinstance(full_response, str) and full_response.startswith("{'role'"):
+        # Handle the case where it's a string representation of a dict
+        try:
+            # Convert string representation to actual dict using ast.literal_eval
+            import ast
+            response_dict = ast.literal_eval(full_response)
+            if isinstance(response_dict, dict) and 'content' in response_dict:
+                full_response = response_dict['content']
+        except:
+            _logger.warning(f"Failed to parse response as dict: {full_response[:100]}...")
+
     # Split the response into words and yield them as SSE events
     words = full_response.split()
     for i in range(0, len(words), 3):  # Send 3 words at a time
