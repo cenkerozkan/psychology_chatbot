@@ -54,7 +54,7 @@ class ChatService:
         prompt: str = self._prompt_generator.generate_main_prompt(user_query=query)
         response: any
         try:
-            contents: list = [f"role + {msg.role}, content: {msg.content}" for msg in chat_thread.history[-300:]]
+            contents: list = [f"role: {msg.role}\ncontent: {msg.content}" for msg in chat_thread.history[-300:]]
             contents.append(prompt)
             #self._logger.info(f"Contents: {contents}")
             response = self._gemini_client.models.generate_content(
