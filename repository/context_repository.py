@@ -1,9 +1,10 @@
-from pymongo import AsyncMongoClient
+import asyncio
 
 from base.mongodb_repository_base import MongoDBRepositoryBase
 from util.logger import get_logger
 from db.mongodb_connector import MongoDBConnector
 from db.model.chat_thread_model import ChatThreadModel
+from db.model.message_model import MessageModel
 
 class ContextRepository(MongoDBRepositoryBase):
     def __init__(self):
@@ -21,42 +22,14 @@ class ContextRepository(MongoDBRepositoryBase):
             if "psychology_chat_context" not in db_list:
                 # Create database by inserting a dummy document and then deleting it
                 await self._db.command({
-                    "create": "chat_history",
-                    "validator": {
-                        "$jsonSchema": {
-                            "bsonType": "object",
-                            "required": ["chat_id", "created_at", "updated_at", "history"],
-                            "properties": {
-                                "chat_name": {"bsonType": "string"},
-                                "chat_id": {"bsonType": "string"},
-                                "created_at": {"bsonType": "string"},
-                                "updated_at": {"bsonType": "string"},
-                                "history": {"bsonType": "array"}
-                            }
-                        }
-                    }
-                })
+                    "create": "chat_history"})
                 self._logger.info("Created context database")
 
             # Check if collection exists
             collections = await self._db.list_collection_names()
             if "chat_history" not in collections:
                 await self._db.create_collection(
-                    "chat_history",
-                    validator={
-                        "$jsonSchema": {
-                            "bsonType": "object",
-                            "required": ["chat_id", "created_at", "updated_at", "history"],
-                            "properties": {
-                                "chat_name": {"bsonType": "string"},
-                                "chat_id": {"bsonType": "string"},
-                                "created_at": {"bsonType": "string"},
-                                "updated_at": {"bsonType": "string"},
-                                "history": {"bsonType": "array"}
-                            }
-                        }
-                    }
-                )
+                    "chat_history")
                 self._logger.info("Created chat_history collection")
 
             # Create index after ensuring collection exists
@@ -102,10 +75,9 @@ class ContextRepository(MongoDBRepositoryBase):
         self._logger.info(f"Retrieving document with id: {id}")
         try:
             result = await self._collection.find_one({"chat_id": id})
-
         except Exception as e:
-            self._logger.error(e)
-            raise Exception(e)
+            self._logger.error(f"Something went wrong: {e}")
+            return None
         return ChatThreadModel(**result) if result else None
 
     async def get_one_by_name(
@@ -142,8 +114,7 @@ class ContextRepository(MongoDBRepositoryBase):
             await self._collection.update_one({"chat_id": chat_history.chat_id}, {"$set": chat_history.model_dump()})
             result = True
         except Exception as e:
-            self._logger.error(e)
-            raise Exception(e)
+            self._logger.error(f"Failed to update document with id: {chat_history.chat_id}, error: {e}")
         return result
 
     async def update_many(
@@ -173,8 +144,7 @@ class ContextRepository(MongoDBRepositoryBase):
             result = await self._collection.delete_one({"chat_id": id})
         except Exception as e:
             self._logger.error(e)
-            raise Exception(e)
-
+            return False
         if result.deleted_count == 1:
             return True
         else:
@@ -194,5 +164,41 @@ class ContextRepository(MongoDBRepositoryBase):
             return True
         else:
             return False
+
+    async def get_all_by_uid(
+            self,
+            uid: str
+    ) -> list[ChatThreadModel] | None:
+        results: any
+        try:
+            results = self._collection.find({"user_uid": uid})
+        except Exception as e:
+            self._logger.error(f"Something went wrong: {e}")
+            return None
+        return [ChatThreadModel(**result) async for result in results]
+
+    async def get_one_by_uid(
+            self,
+            uid: str
+    ) -> ChatThreadModel | None:
+        result: any
+        try:
+            result = await self._collection.find_one({"user_uid": uid})
+        except Exception as e:
+            self._logger.error(f"Something went wrong: {e}")
+            return None
+        return ChatThreadModel(**result) if result else None
+
+    async def get_history_by_id(
+            self,
+            id: str
+    ) -> list[MessageModel] | None:
+        result: any
+        try:
+            result = await self._collection.find_one({"chat_id": id})
+        except Exception as e:
+            self._logger.error(f"Something went wrong: {e}")
+            return None
+        return [MessageModel(**message) for message in result.get("history")] if result else []
 
 context_repository = ContextRepository()
