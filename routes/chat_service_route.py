@@ -81,7 +81,7 @@ async def get_chat_history(
             data=chat_history.get("data"),
         ).model_dump())
 
-@router.delete("delete_chat_thread/{chat_id}")
+@router.delete("/delete_chat_thread/{chat_id}")
 async def delete_chat_thread(
         chat_id: str,
         api_key: str = Depends(get_api_key)
