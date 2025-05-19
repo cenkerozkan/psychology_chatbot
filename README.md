@@ -23,7 +23,7 @@ This is the backend API for a psychology-focused chatbot application. It allows 
 *   **Database:** MongoDB
 *   **AI Models:** Google Gemini (with fallback to OpenAI GPT-4.1)
 *   **Language:** Python
-*   **Deployment:** Heroku (based on the provided base URL)
+*   **Deployment:** Heroku
 
 ## API Endpoints
 
@@ -396,12 +396,4 @@ The application relies on the following environment variables:
 *   `GEMINI_API_KEY`: API key for Google Gemini.
 *   `OPENAI_API_KEY`: API key for OpenAI.
 *   MongoDB connection details (implicitly handled by `MongoDBConnector`, ensure your environment is configured for it).
-
-## Further Development
-
-*   Implement more sophisticated error handling and logging.
-*   Add user authentication and authorization beyond a single API key if multiple users are intended.
-*   Expand the capabilities of the AI prompt generation.
-*   Add unit and integration tests.
-*   Consider more specific HTTP status codes for certain error conditions (e.g., 404 for "resource not found" instead of a generic 500 when an ID doesn't exist for deletion/update operations).
 ```
